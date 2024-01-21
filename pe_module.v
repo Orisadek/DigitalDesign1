@@ -22,7 +22,7 @@ reg [2*DATA_WIDTH-1:0] res_o; // result of matrix index
 
 // ### Please start your Verilog code here ### 
 
-always @(posedge clk_i) // wake in rising edge of clock or falling edge of reset
+always @(posedge clk_i) // wake in rising edge of clock or falling edge of reset //add negedge rst
 begin : multiply_and_acc 
   if(~rst_ni) // in negative edge
     begin
@@ -35,6 +35,6 @@ begin : multiply_and_acc
       res_o <= res_o + (a_i * b_i); // multiple the argument and add to result
       a_o      <= a_i; // move A to next pe
       b_o      <= b_i; // move B to next pe
-  end
+    end
 end
 endmodule
