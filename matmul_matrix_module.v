@@ -19,10 +19,10 @@ parameter DATA_WIDTH = 32; // data width
 parameter BUS_WIDTH = 64; // bus width
 parameter MAX_DIM = BUS_WIDTH/DATA_WIDTH; // max dim of the matrix
 //-----------------variables------------------------------------------
-wire  clk_i,rst_ni;
-reg [1:0] N_i,K_i,M_i;
-reg [DATA_WIDTH-1:0]    operandA_i,operandB [MAX_DIM-1:0][MAX_DIM-1:0];
-reg  [2*DATA_WIDTH-1:0] res_o [MAX_DIM-1:0][MAX_DIM-1:0];
+wire clk_i,rst_ni;
+reg  [1:0] N_i,K_i,M_i;
+reg  [DATA_WIDTH-1:0]   operandA_i,operandB [MAX_DIM-1:0][MAX_DIM-1:0];
+reg  [2*DATA_WIDTH-1:0] res_o    [MAX_DIM-1:0][MAX_DIM-1:0];
 wire [DATA_WIDTH-1:0]   a_matrix [MAX_DIM-1:0][MAX_DIM:0];
 wire [DATA_WIDTH-1:0]   b_matrix [MAX_DIM:0][MAX_DIM-1:0];
 wire [2*DATA_WIDTH-1:0] c_matrix [MAX_DIM-1:0][MAX_DIM-1:0];
