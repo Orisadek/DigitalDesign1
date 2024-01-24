@@ -10,30 +10,32 @@
 
 `resetall
 `timescale 1ns/10ps
-`define BYTE 8
 module memory_modul(clk_i,addr_i,data_i,pwrite_i,data_o);
-input addr_i,data_i,pwrite_i;
+input clk_i,addr_i,data_i,pwrite_i;
 output data_o;
 parameter DATA_WIDTH = 32; // parameter for data
 parameter BUS_WIDTH  = 64; // bus width
 parameter ADDR_WIDTH = 32; // address width
 parameter MAX_DIM    = BUS_WIDTH/DATA_WIDTH; // max dim of the matrix
 parameter SPN        = 4;
+parameter BYTE       = 8;
 wire clk_i;
 wire pwrite_i;
-reg [ADDR_WIDTH-1:0] addr_i;
-reg [BYTE-1:0] data_o,data_i;
-
-
-reg [7:0] mem [(2**ADDR_WIDTH)-1:0];
+wire [ADDR_WIDTH-1:0] addr_i;
+wire [BYTE-1:0] data_i;
+wire [BYTE-1:0] data_o;
+reg  [BYTE-1:0] mem [0:(2**ADDR_WIDTH)-1];
 
 assign data_o = mem[addr_i];
 
 always @(posedge clk_i)
-	begin
-		if(pwrite_i) mem[addr_i] <= data_i;
+	begin:write_to_mem
+		if(pwrite_i)
+		    begin
+		      mem[addr_i] <= data_i;
+		    end 
 	end
-end
+
 
 
 // ### Please start your Verilog code here ### 

@@ -15,9 +15,9 @@ input clk_i, rst_ni,a_i,b_i; // define inputs
 output a_o,b_o,res_o; // define outputs
 parameter DATA_WIDTH = 32; // parameter for data
 wire clk_i, rst_ni; // define clk and rst
-wire [DATA_WIDTH-1:0] a_i ,b_i; // value inputs
+wire[DATA_WIDTH-1:0] a_i ,b_i; // value inputs
 reg [DATA_WIDTH-1:0] a_o ,b_o; // value to move on to the next pe
-reg [2*DATA_WIDTH-1:0] res_o; // result of matrix index
+reg [2*DATA_WIDTH:0] res_o; // result of matrix index
 
 
 // ### Please start your Verilog code here ### 
@@ -32,7 +32,7 @@ begin : multiply_and_acc
     end
   else
     begin  
-      res_o <= res_o + (a_i * b_i); // multiple the argument and add to result
+      res_o    <= res_o[2*DATA_WIDTH-1:0] + (a_i * b_i); // multiple the argument and add to result
       a_o      <= a_i; // move A to next pe
       b_o      <= b_i; // move B to next pe
     end
