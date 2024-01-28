@@ -10,72 +10,174 @@
 
 `resetall
 `timescale 1ns/10ps
-module matmul_matrix_module(clk_i,rst_ni,N_i,K_i,M_i,start_i,a_matrix_i,b_matrix_i,c_matrix_o);
+module matmul_matrix_module(clk_i,rst_ni,n_dim_i,k_dim_i,m_dim_i
+,start_i,a_matrix_i,b_matrix_i,c_matrix_o,flags_o);
 //-------------------ports----------------------------------------------
 input  clk_i,rst_ni,start_i; // clock , reset , start bit from control
 input  a_matrix_i,b_matrix_i; // the matrices are actually two long registers
-input  N_i,K_i,M_i; // matrix A is NxK , matrix B KxM
-output c_matrix_o; // output matrix is actually long matrix 
+input  n_dim_i,k_dim_i,m_dim_i; // matrix A is NxK , matrix B KxM
+output c_matrix_o,flags_o; // output matrix is actually long matrix 
 //-----------------parameters-----------------------------------------
-parameter DATA_WIDTH = 32; // data width
-parameter BUS_WIDTH = 64; // bus width
+parameter DATA_WIDTH = 8; // data width
+parameter BUS_WIDTH = 16; // bus width
 parameter MAX_DIM = BUS_WIDTH/DATA_WIDTH; // max dim of the matrix
+parameter MATRIX_WORD = MAX_DIM*DATA_WIDTH;
 //-----------------variables------------------------------------------
 wire clk_i,rst_ni,start_i;// clock , reset , start bit from control
-reg  [1:0] N_i,K_i,M_i; // matrix A is NxK , matrix B KxM
-reg  [(MAX_DIM*MAX_DIM*DATA_WIDTH)-1:0] a_matrix_i; // this matrix is actually  long register
-reg  [(MAX_DIM*MAX_DIM*DATA_WIDTH)-1:0] b_matrix_i; // this matrix is actually  long register
-reg  [(MAX_DIM*MAX_DIM*2*DATA_WIDTH)-1:0] c_matrix_o; // output matrix is actually long matrix
-wire [DATA_WIDTH-1:0]   matA [0:MAX_DIM-1][0:MAX_DIM-1]; // wires for pe's rows
-wire [DATA_WIDTH-1:0]   matB [0:MAX_DIM-1][0:MAX_DIM-1]; // wires for pe's cols
-wire [2*DATA_WIDTH-1:0] matC [0:MAX_DIM-1][0:MAX_DIM-1]; // wires for pe's results
+wire [1:0] n_dim_i,k_dim_i,m_dim_i; // matrix A is NxK , matrix B KxM
+wire signed [(MAX_DIM*MAX_DIM*DATA_WIDTH)-1:0] a_matrix_i; // this matrix is actually  long register
+wire signed [(MAX_DIM*MAX_DIM*DATA_WIDTH)-1:0] b_matrix_i; // this matrix is actually  long register
+wire  signed [(MAX_DIM*MAX_DIM*2*(DATA_WIDTH))-1:0] c_matrix_o; // output matrix is actually long matrix
+wire [(MAX_DIM*MAX_DIM) -1:0] flags_o;
+wire  signed [DATA_WIDTH-1:0]   matA [MAX_DIM-1:0][MAX_DIM-1:0]; // wires for pe's rows
+wire  signed [DATA_WIDTH-1:0]   matB [MAX_DIM-1:0][MAX_DIM-1:0]; // wires for pe's cols
+wire  signed [2*DATA_WIDTH-1:0]  matC [MAX_DIM-1:0][MAX_DIM-1:0]; // wires for pe's results
+reg  signed [DATA_WIDTH-1:0]   regMatA [MAX_DIM-1:0]; // wires for pe's rows
+reg  signed [DATA_WIDTH-1:0]   regMatB [MAX_DIM-1:0]; // wires for pe's cols
+reg  signed [2*MAX_DIM :0 ] counter;
+reg  signed [2*MAX_DIM :0] index_a,index_b;
+wire signed [MAX_DIM-1:0] output_garbage_col,output_garbage_rows;
 
-genvar  i,j; 
+ 
+genvar  i,j,x,y; 
 generate
-  for (i = 0; i < MAX_DIM; i = i+1) begin : rows 
-    for (j = 0; j < MAX_DIM; j = j+1) begin : columns  
-      pe #(.DATA_WIDTH(DATA_WIDTH)) pe (
-        .clk_i(clk_i), //clk
-        .rst_ni(rst_ni), // reset
-        .a_i(matA[i][j]), // a element in
-        .b_i(matB[i][j]), // b element in
-        .a_o(matA[i][j+1]), // a element out
-        .b_o(matB[i+1][j]), // b element out
-        .res_o(matC[i][j]) // result out
-      );
+//-----------------------general connction (without last row and col)----------------------------
+  for (i = 0; i < MAX_DIM-1; i = i+1)
+   begin : rows 
+      for (j = 0; j < MAX_DIM-1; j = j+1)
+         begin : columns  
+            pe_module #(.DATA_WIDTH(DATA_WIDTH)) U_pe (
+             .clk_i(clk_i), //clk
+             .rst_ni(rst_ni), // reset
+             .a_i(matA[i][j]), // a element in
+             .b_i(matB[i][j]), // b element in
+             .a_o(matA[i][j+1]), // a element out
+             .b_o(matB[i+1][j]), // b element out
+             .res_o(matC[i][j]), // result out 
+		     .overflow_o(flags_o[i+j*MAX_DIM])
+           );
     end 
   end
   
-/*
-////   fix this part, not the same actions needed , see page 7 in project
-  for (i = 0; i < MAX_DIM; i = i +1) begin : Left
-     assign  a_matrix[i][0] = operandA_i[i][0]; 
-  end
+ 
+//------------------------general connection for the last row all cols but corner one-------------	
+	
+	 for (x = 0; x < MAX_DIM-1; x = x+1) 
+	   begin : columns_last_row
+		   pe_module #(.DATA_WIDTH(DATA_WIDTH)) U_pe_last_row (
+			.clk_i(clk_i), //clk
+			.rst_ni(rst_ni), // reset
+			.a_i(matA[MAX_DIM-1][x]), // a element in
+			.b_i(matB[MAX_DIM-1][x]), // b element in
+			.a_o(matA[MAX_DIM-1][x+1]), // a element out
+			.b_o(output_garbage_col[x]), // b element out 
+			.res_o(matC[MAX_DIM-1][x]), // result out
+			.overflow_o(flags_o[MAX_DIM-1+x*MAX_DIM])
+      );
+	   end
+//------------------------general connection for the last col all rows but corner one-------------	
 
-  for (j = 0; j < MAX_DIM; j = j +1) begin : Top
-     assign b_matrix[0][j] = operandB_i[0][j];
-  end
-*/ 
+	for (y = 0; y < MAX_DIM-1; y = y+1) 
+	  begin : rows_last_col
+		  pe_module #(.DATA_WIDTH(DATA_WIDTH)) U_pe_last_col (
+        .clk_i(clk_i), //clk
+        .rst_ni(rst_ni), // reset
+        .a_i(matA[y][MAX_DIM-1]), // a element in
+        .b_i(matB[y][MAX_DIM-1]), // b element in
+        .a_o(output_garbage_rows[y]), // a element out  
+        .b_o(matB[y+1][MAX_DIM-1]), // b element out
+        .res_o(matC[y][MAX_DIM-1]), // result out
+		 .overflow_o(flags_o[y+(MAX_DIM-1)*MAX_DIM])
+      );
+	  end
+//------------------------last corner pe--------------------------------------------
+
+	 pe_module #(.DATA_WIDTH(DATA_WIDTH)) U_pe_corner (
+        .clk_i(clk_i), //clk
+        .rst_ni(rst_ni), // reset
+        .a_i(matA[MAX_DIM-1][MAX_DIM-1]), // a element in
+        .b_i(matB[MAX_DIM-1][MAX_DIM-1]), // b element in
+        .a_o(output_garbage_rows[MAX_DIM-1]), // a element out
+        .b_o(output_garbage_col[MAX_DIM-1]), // b element out
+        .res_o(matC[MAX_DIM-1][MAX_DIM-1]), // result out
+		.overflow_o(flags_o[(MAX_DIM-1)+(MAX_DIM-1)*MAX_DIM])
+      );
 endgenerate
 
-always @(posedge clk_i) // TODO : add reset
-  begin: insert_vector_a
-	if(start_i) //TODO:add index of clk (acc)
+generate
+  for (j = 0; j < MAX_DIM; j = j +1) begin : rows_assign
+	for (i = 0; i < MAX_DIM; i = i +1) begin : cols_assign
+		assign  c_matrix_o[(j*DATA_WIDTH*MAX_DIM*2+i*(DATA_WIDTH*2))+: 2*DATA_WIDTH]  = matC[i][j]; 
+	end
+  end
+ endgenerate
+//-------------------assign start----------------------------------------
+generate
+  for (i = 0; i < MAX_DIM; i = i +1) begin : Left_assign
+     assign  matA[i][0] = regMatA[i]; 
+  end
+ endgenerate
+ 
+ generate
+  for (j = 0; j < MAX_DIM; j = j +1) begin : Top_assign
+     assign  matB[0][j] = regMatB[j]; 
+  end
+ endgenerate
+ 
+//-----------------operations with clock----------------------------------------------------
+always @(posedge clk_i )//or negedge rst_ni) // TODO : add reset
+  begin: acc_counter
+  if(~rst_ni) // in negative edge
 		begin
-			for (i = 0; i < MAX_DIM; i = i+1) // TODO: change counter i  
+			counter  <= 0;
+		end
+  else if(start_i)
+		begin
+			counter <= counter+1;
+		end
+  end;
+ 
+always @(posedge clk_i) 
+  begin: insert_vector_a
+    if(~rst_ni)
+     begin
+        for (index_a = 0; index_a < MAX_DIM; index_a = index_a+1)
+          begin : reset_a
+			       regMatA[index_a] <= 0;
+		      end
+	   end
+   else if(start_i && counter<=(k_dim_i+m_dim_i+n_dim_i-2)) 
+		begin
+			for (index_a = 0; index_a < MAX_DIM; index_a = index_a+1) // TODO: change counter i  
 				begin : Left
-				   matA[i][0] <= a_matrix_i[(i*MAX_DIM*DATA_WIDTH)+:(i*MAX_DIM*DATA_WIDTH+DATA_WIDTH)]; //TODO:change to matrix and then move the data 
+					regMatA[index_a] <= (counter-index_a>=0 && counter-index_a<k_dim_i && index_a < n_dim_i)
+					?
+						a_matrix_i[(index_a*MATRIX_WORD)+(counter*DATA_WIDTH)+:DATA_WIDTH] 
+					:
+						0; //TODO:change to matrix and then move the data 
 				end
 		end
-   end
+ end
+
 
 always @(posedge clk_i) //TODO: add reset
-  begin: insert_vector_b
-	if(start_i) //TODO:add index of clk (acc)
+ begin: insert_vector_b
+   if(~rst_ni)
+     begin
+        for (index_b = 0; index_b < MAX_DIM; index_b = index_b+1)
+          begin : reset_b
+			regMatB[index_b] <= {DATA_WIDTH{1'b0}};
+		  end
+	end
+  else if(start_i && counter<=(k_dim_i+m_dim_i+n_dim_i-2)) //TODO:add index of clk (acc)
 		begin
-			for (j = 0; j < MAX_DIM; j = j+1) // TODO: change counter j  
+			for (index_b = 0; index_b < MAX_DIM; index_b = index_b+1) // TODO: change counter j  
 				begin : Top  
-				    matB[0][j] <= operandB_i[0][j];  //TODO:change to matrix and then move the data 
+					regMatB[index_b] <=  (counter-index_b>=0 && counter-index_b<m_dim_i && index_b < k_dim_i)
+					?
+						b_matrix_i[(index_b*MATRIX_WORD)+(counter*DATA_WIDTH)+:DATA_WIDTH]
+					: 
+						0;  //TODO:change to matrix and then move the data 
 				end
 		end
   end
