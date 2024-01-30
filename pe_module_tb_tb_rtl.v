@@ -24,7 +24,7 @@ wire [DATA_WIDTH-1:0]b_i;
 wire [DATA_WIDTH-1:0]a_o;
 wire [DATA_WIDTH-1:0]b_o;
 wire [2*DATA_WIDTH-1:0]res_o;
-
+wire overflow_o;
  
 
 
@@ -35,7 +35,8 @@ pe_module #(DATA_WIDTH) U_0(
    .b_i    (b_i),
    .a_o    (a_o),
    .b_o    (b_o),
-   .res_o  (res_o)
+   .res_o  (res_o),
+   .overflow_o (overflow_o)
 );
 
 pe_module_tester #(DATA_WIDTH) U_1(
@@ -45,7 +46,8 @@ pe_module_tester #(DATA_WIDTH) U_1(
    .b_i    (b_i),
    .a_o    (a_o),
    .b_o    (b_o),
-   .res_o  (res_o)
+   .res_o  (res_o),
+   .overflow_o (overflow_o)
 );
   
 

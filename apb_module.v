@@ -18,7 +18,7 @@ output pready_o,pslverr_o,prdata_o; // output ports
 parameter DATA_WIDTH = 32; // data width
 parameter BUS_WIDTH = 64; // bus width
 parameter ADDR_WIDTH = 32; // address width
-parameter MAX_DIM = BUS_WIDTH/DATA_WIDTH; // max dim of the matrix
+localparam MAX_DIM = BUS_WIDTH/DATA_WIDTH; // max dim of the matrix
 parameter [1:0] 	  IDLE          = 2'b00,
 			          SETUP         = 2'b01,
 			          ACCESS_READ   = 2'b10,
@@ -90,7 +90,7 @@ begin: apb_comb
 			begin
 				if(penable_i == 1'b1)
 					begin
-						next_state     = ACCESS_S;
+						
 						next_pready_o  = 1'b0;
 						next_pslverr_o = 1'b0;
 						next_prdata_o  = 0;

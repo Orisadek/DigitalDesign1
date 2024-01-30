@@ -15,7 +15,8 @@ module pe_module_tester (clk_i,
                          b_i,
                          a_o,
                          b_o,
-                         res_o
+                         res_o,
+						 overflow_o
                         );
 
 // Local declarations
@@ -30,6 +31,7 @@ output b_i;
 input  a_o;
 input  b_o;
 input  res_o;
+input overflow_o;
 
 reg clk_i;
 reg rst_ni;
@@ -38,6 +40,7 @@ reg [DATA_WIDTH-1:0] b_i;
 wire [DATA_WIDTH-1:0] a_o;
 wire [DATA_WIDTH-1:0] b_o;
 wire [2*DATA_WIDTH-1:0] res_o;
+wire overflow_o;
 
 
 
@@ -58,6 +61,12 @@ initial begin: setup_input
   b_i = 20;
   #1 
   a_i = 2;
+  b_i = 3;
+   #1 
+  a_i = 2;
+  b_i = -5;
+   #1 
+  a_i = 1;
   b_i = 3;
 end
 

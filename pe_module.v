@@ -10,14 +10,15 @@
 
 `resetall
 `timescale 1ns/10ps
-module pe_module(clk_i,rst_ni,a_i,b_i,a_o,b_o,res_o,overflow_o);//module ports
-input clk_i, rst_ni,a_i,b_i; // define inputs 
+module pe_module(clk_i,rst_ni,a_i,b_i,start_i,a_o,b_o,res_o,overflow_o);//module ports
+input clk_i, rst_ni,a_i,b_i,start_i; // define inputs 
 output a_o,b_o,res_o,overflow_o; // define outputs
 parameter DATA_WIDTH = 32; // parameter for data
-wire clk_i, rst_ni; // define clk and rst
+wire clk_i, rst_ni,start_i; // define clk and rst
 wire signed [DATA_WIDTH-1:0] a_i ,b_i; // value inputs
 reg  signed [DATA_WIDTH-1:0] a_o ,b_o; // value to move on to the next pe
 reg  signed [2*DATA_WIDTH-1:0] res_o; // result of matrix index
+reg  signed [2*DATA_WIDTH-1:0] mul_res; // result of matrix index
 reg overflow_o;
 
 
@@ -29,24 +30,21 @@ begin : multiply_and_acc //TODO: add the option to clear the result for next usa
       b_o      <= 0; // initialize B out
       res_o    <= 0; // initialize result
     end
+  else if(!start_i) 
+    begin 
+      a_o      <= 0; // initialize A out
+      b_o      <= 0; // initialize B out
+      res_o    <= 0; // initialize result 
+    end
   else
     begin  
-      res_o    <= res_o + (a_i * b_i); // multiple the argument and add to result
-      a_o      <= a_i; // move A to next pe
-      b_o      <= b_i; // move B to next pe
+      res_o       <= res_o + (a_i * b_i); // multiple the argument and add to result
+	  overflow_o  <= res_o[2*DATA_WIDTH-1];
+      a_o         <= a_i; // move A to next pe
+      b_o         <= b_i; // move B to next pe
     end
 end
 
-always @(posedge clk_i or negedge rst_ni) // wake in rising edge of clock or falling edge of reset 
-begin : find_overflow 
-  if(~rst_ni) // in negative edge
-    begin
-		overflow_o<=0;
-    end
-  else
-    begin  
-	  overflow_o <= res_o[2*DATA_WIDTH-1]; // change to diffrent solution
-    end
-end
+
 
 endmodule
