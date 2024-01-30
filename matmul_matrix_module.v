@@ -18,8 +18,8 @@ input  a_matrix_i,b_matrix_i; // the matrices are actually two long registers
 input  n_dim_i,k_dim_i,m_dim_i; // matrix A is NxK , matrix B KxM
 output c_matrix_o,flags_o; // output matrix is actually long matrix 
 //-----------------parameters-----------------------------------------
-parameter DATA_WIDTH = 16; // data width
-parameter BUS_WIDTH = 32; // bus width
+parameter DATA_WIDTH = 8; // data width
+parameter BUS_WIDTH = 16; // bus width
 localparam MAX_DIM = BUS_WIDTH/DATA_WIDTH; // max dim of the matrix
 localparam MATRIX_WORD = MAX_DIM*DATA_WIDTH;
 //-----------------variables------------------------------------------
@@ -35,10 +35,9 @@ wire signed [2*DATA_WIDTH-1:0] matC [MAX_DIM-1:0][MAX_DIM-1:0]; // wires for pe'
 reg  signed [DATA_WIDTH-1:0]   regMatA[MAX_DIM-1:0]; // wires for pe's rows
 reg  signed [DATA_WIDTH-1:0]   regMatB[MAX_DIM-1:0]; // wires for pe's rows
 reg  signed [2*MAX_DIM :0] counter,index_a,index_b;
-wire signed [DATA_WIDTH-1:0] output_garbage_rows [MAX_DIM-1:0];
-wire signed [DATA_WIDTH-1:0] output_garbage_col  [MAX_DIM-1:0];
 
-genvar  i,j,x,y; 
+
+genvar  i,j; 
 generate
 //-----------------------general connction (without last row and col)----------------------------
   for (i = 0; i < MAX_DIM; i = i+1)
@@ -58,56 +57,9 @@ generate
            );
     end 
   end
-  
- /*
-//------------------------general connection for the last row all cols but corner one-------------	
-	
-	 for (x = 0; x < MAX_DIM-1; x = x+1) 
-	   begin : columns_last_row
-		   pe_module #(.DATA_WIDTH(DATA_WIDTH)) U_pe_last_row (
-			.clk_i(clk_i), //clk
-			.rst_ni(rst_ni), // reset
-			.a_i(matA[MAX_DIM-1][x]), // a element in
-			.b_i(matB[MAX_DIM-1][x]), // b element in
-			.a_o(matA[MAX_DIM-1][x+1]), // a element out
-			.b_o(output_garbage_col[x]), // b element out 
-			.res_o(matC[MAX_DIM-1][x]), // result out
-			.start_i(start_i),
-			.overflow_o(flags_o[MAX_DIM-1+x*MAX_DIM])
-      );
-	   end
-//------------------------general connection for the last col all rows but corner one-------------	
-
-	for (y = 0; y < MAX_DIM-1; y = y+1) 
-	  begin : rows_last_col
-		  pe_module #(.DATA_WIDTH(DATA_WIDTH)) U_pe_last_col (
-        .clk_i(clk_i), //clk
-        .rst_ni(rst_ni), // reset
-        .a_i(matA[y][MAX_DIM-1]), // a element in
-        .b_i(matB[y][MAX_DIM-1]), // b element in
-        .a_o(output_garbage_rows[y]), // a element out  
-        .b_o(matB[y+1][MAX_DIM-1]), // b element out
-        .res_o(matC[y][MAX_DIM-1]), // result out
-        .start_i(start_i),
-		.overflow_o(flags_o[y+(MAX_DIM-1)*MAX_DIM])
-      );
-	  end
-//------------------------last corner pe--------------------------------------------
-
-	 pe_module #(.DATA_WIDTH(DATA_WIDTH)) U_pe_corner (
-        .clk_i(clk_i), //clk
-        .rst_ni(rst_ni), // reset
-        .a_i(matA[MAX_DIM-1][MAX_DIM-1]), // a element in
-        .b_i(matB[MAX_DIM-1][MAX_DIM-1]), // b element in
-        .a_o(output_garbage_rows[MAX_DIM-1]), // a element out
-        .b_o(output_garbage_col[MAX_DIM-1]), // b element out
-        .res_o(matC[MAX_DIM-1][MAX_DIM-1]), // result out
-        .start_i(start_i),
-		.overflow_o(flags_o[(MAX_DIM-1)+(MAX_DIM-1)*MAX_DIM])
-      );
-      */
 endgenerate
 
+//-------------------assign values----------------------------------------
 generate
   for (j = 0; j < MAX_DIM; j = j +1) begin : rows_assign
 	for (i = 0; i < MAX_DIM; i = i +1) begin : cols_assign
@@ -154,7 +106,7 @@ always @(posedge clk_i or negedge rst_ni)
 		begin
 			for (index_a = 0; index_a < MAX_DIM; index_a = index_a+1) // TODO: change counter i  
 				begin : Left
-				    regMatA[index_a] <= (counter-index_a>=0 && counter-index_a<{{2*MAX_DIM-2{1'b0}},k_dim_i} && index_a < {{2*MAX_DIM-1{1'b0}},n_dim_i}) ?
+				    regMatA[index_a] <= (counter-index_a>=0 && counter-index_a<{{2*MAX_DIM-1{1'b0}},k_dim_i} && index_a < {{2*MAX_DIM-1{1'b0}},n_dim_i}) ?
 						a_matrix_i[(index_a*MATRIX_WORD)+(counter*DATA_WIDTH)+:DATA_WIDTH] : {DATA_WIDTH{1'b0}};
 				end
 		end
@@ -174,11 +126,8 @@ always @(posedge clk_i or negedge rst_ni)
 		begin
 			for (index_b = 0; index_b < MAX_DIM; index_b = index_b+1)  
 				begin : Top  
-					regMatB[index_b] <=  (counter-index_b>=0 && counter-index_b<m_dim_i && index_b < k_dim_i)
-					?
-					b_matrix_i[(index_b*MATRIX_WORD)+(counter*DATA_WIDTH)+:DATA_WIDTH]
-					:
-					0; 
+					regMatB[index_b] <=  (counter-index_b>=0 && counter-index_b<{{2*MAX_DIM-1{1'b0}},m_dim_i} && index_b < {{2*MAX_DIM-1{1'b0}},k_dim_i})?
+					b_matrix_i[(index_b*MATRIX_WORD)+(counter*DATA_WIDTH)+:DATA_WIDTH]: {DATA_WIDTH{1'b0}};
 				end
 		end
 end

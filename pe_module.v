@@ -18,7 +18,6 @@ wire clk_i, rst_ni,start_i; // define clk and rst
 wire signed [DATA_WIDTH-1:0] a_i ,b_i; // value inputs
 reg  signed [DATA_WIDTH-1:0] a_o ,b_o; // value to move on to the next pe
 reg  signed [2*DATA_WIDTH-1:0] res_o; // result of matrix index
-reg  signed [2*DATA_WIDTH-1:0] mul_res; // result of matrix index
 reg overflow_o;
 
 
@@ -26,15 +25,17 @@ always @(posedge clk_i or negedge rst_ni) // wake in rising edge of clock or fal
 begin : multiply_and_acc //TODO: add the option to clear the result for next usage
   if(~rst_ni) // in negative edge 
     begin
-      a_o      <= 0; // initialize A out
-      b_o      <= 0; // initialize B out
-      res_o    <= 0; // initialize result
+      a_o         <=  0; // initialize A out
+      b_o         <=  0; // initialize B out
+      res_o       <=  0; // initialize result
+	  overflow_o  <=  0;
     end
   else if(!start_i) 
     begin 
-      a_o      <= 0; // initialize A out
-      b_o      <= 0; // initialize B out
-      res_o    <= 0; // initialize result 
+      a_o         <=  0; // initialize A out
+      b_o         <=  0; // initialize B out
+      res_o       <=  0; // initialize result 
+	  overflow_o  <=  0;
     end
   else
     begin  
