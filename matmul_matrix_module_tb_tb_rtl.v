@@ -20,15 +20,15 @@ localparam MAX_DIM = BUS_WIDTH/DATA_WIDTH; // max dim of the matrix
 // Internal signal declarations
 wire clk_i;
 wire rst_ni;
-wire [1:0] n_dim_i;
-wire [1:0] k_dim_i;
-wire [1:0] m_dim_i;
+wire [2:0] n_dim_i;
+wire [2:0] k_dim_i;
+wire [2:0] m_dim_i;
 wire start_i;
 wire [(MAX_DIM*MAX_DIM*DATA_WIDTH)-1:0] a_matrix_i;
 wire [(MAX_DIM*MAX_DIM*DATA_WIDTH)-1:0] b_matrix_i;
 wire [(MAX_DIM*MAX_DIM*2*(DATA_WIDTH))-1:0] c_matrix_o;
 wire [(MAX_DIM*MAX_DIM) -1:0] flags_o;
-
+wire finish_mul_o;
 
 matmul_matrix_module #(.DATA_WIDTH(8),.BUS_WIDTH(16)) U_0(
    .clk_i      (clk_i),
@@ -40,7 +40,8 @@ matmul_matrix_module #(.DATA_WIDTH(8),.BUS_WIDTH(16)) U_0(
    .a_matrix_i (a_matrix_i),
    .b_matrix_i (b_matrix_i),
    .c_matrix_o (c_matrix_o),
-   .flags_o    (flags_o)
+   .flags_o    (flags_o),
+   .finish_mul_o (finish_mul_o)
 );
 
 matmul_matrix_module_tester #(.DATA_WIDTH(8),.BUS_WIDTH(16)) U_1(
@@ -53,7 +54,8 @@ matmul_matrix_module_tester #(.DATA_WIDTH(8),.BUS_WIDTH(16)) U_1(
    .a_matrix_i (a_matrix_i),
    .b_matrix_i (b_matrix_i),
    .c_matrix_o (c_matrix_o),
-   .flags_o    (flags_o)
+   .flags_o    (flags_o),
+   .finish_mul_o (finish_mul_o)
 );
 
 endmodule // matmul_matrix_module_tb
