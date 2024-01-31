@@ -13,7 +13,7 @@
 module pe_module(clk_i,rst_ni,a_i,b_i,start_i,a_o,b_o,res_o,overflow_o);//module ports
 input clk_i, rst_ni,a_i,b_i,start_i; // define inputs 
 output a_o,b_o,res_o,overflow_o; // define outputs
-parameter DATA_WIDTH = 32; // parameter for data
+parameter DATA_WIDTH = 8; // parameter for data
 wire clk_i, rst_ni,start_i; // define clk and rst
 wire signed [DATA_WIDTH-1:0] a_i ,b_i; // value inputs
 reg  signed [DATA_WIDTH-1:0] a_o ,b_o; // value to move on to the next pe
@@ -40,7 +40,7 @@ begin : multiply_and_acc //TODO: add the option to clear the result for next usa
   else
     begin  
       res_o       <= res_o + (a_i * b_i); // multiple the argument and add to result
-	  overflow_o  <= res_o[2*DATA_WIDTH-1];
+	  overflow_o  <= 1;
       a_o         <= a_i; // move A to next pe
       b_o         <= b_i; // move B to next pe
     end

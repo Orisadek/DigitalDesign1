@@ -21,6 +21,7 @@ wire clk_i;
 wire rst_ni;
 wire [DATA_WIDTH-1:0]a_i;
 wire [DATA_WIDTH-1:0]b_i;
+wire start_i;
 wire [DATA_WIDTH-1:0]a_o;
 wire [DATA_WIDTH-1:0]b_o;
 wire [2*DATA_WIDTH-1:0]res_o;
@@ -33,6 +34,7 @@ pe_module #(DATA_WIDTH) U_0(
    .rst_ni (rst_ni),
    .a_i    (a_i),
    .b_i    (b_i),
+   .start_i (start_i),
    .a_o    (a_o),
    .b_o    (b_o),
    .res_o  (res_o),
@@ -44,6 +46,7 @@ pe_module_tester #(DATA_WIDTH) U_1(
    .rst_ni (rst_ni),
    .a_i    (a_i),
    .b_i    (b_i),
+   .start_i (start_i),
    .a_o    (a_o),
    .b_o    (b_o),
    .res_o  (res_o),
