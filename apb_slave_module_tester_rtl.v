@@ -28,10 +28,7 @@ module apb_slave_module_tester (clk_i,
 parameter DATA_WIDTH = 32;
 parameter BUS_WIDTH = 64;
 parameter ADDR_WIDTH = 32;
-parameter MAX_DIM = (BUS_WIDTH / DATA_WIDTH);
-parameter IDLE_S = 2'b00;
-parameter ACCESS_READ = 2'b01;
-parameter ACCESS_WRITE = 2'b10;
+localparam MAX_DIM = (BUS_WIDTH / DATA_WIDTH);
 
 
 output clk_i;
@@ -47,18 +44,73 @@ input  pslverr_o;
 input  prdata_o;
 input  busy_o;
 
-wire clk_i;
-wire rst_ni;
-wire psel_i;
-wire penable_i;
-wire pwrite_i;
-wire pstrb_i;
-wire pwdata_i;
-wire paddr_i;
+
+reg clk_i;
+reg rst_ni;
+reg psel_i;
+reg penable_i;
+reg pwrite_i;
 wire pready_o;
 wire pslverr_o;
-wire prdata_o;
 wire busy_o;
+reg [BUS_WIDTH/8-1:0] pstrb_i; //for every byte there is a Pstrb[n]
+reg [BUS_WIDTH-1:0] pwdata_i;
+reg [ADDR_WIDTH-1:0] paddr_i;
+wire [BUS_WIDTH-1:0] prdata_o;
+
+initial begin: setup_clk
+  clk_i = 1'b0;
+  forever #1 clk_i = ~clk_i;
+end
+
+initial begin: setup_rst
+  rst_ni = 1'b0;
+  #10 rst_ni = 1'b1;
+end
+
+task do_write;
+input [ADDR_WIDTH-1:0] addr_write;
+input [BUS_WIDTH-1:0] data_write;
+	begin
+		psel_i    = 1'b1;
+		pwrite_i  = 1'b1;
+		#1
+		paddr_i   = addr_write;
+		pwdata_i  = data_write;
+		penable_i = 1;
+		#2
+		psel_i = 0;
+		pwrite_i  = 1'b0;
+		penable_i = 0;
+	end
+endtask
+
+task do_read;
+input [ADDR_WIDTH-1:0] addr_read;
+	begin
+		psel_i = 1'b1;
+		pwrite_i  = 1'b0;
+		pstrb_i = 0;
+		#1
+		paddr_i   = addr_read;
+		penable_i = 1;
+		#2
+		psel_i = 0;
+		penable_i = 0;
+	end
+endtask
+
+
+initial begin
+	wait (rst_ni == 1);
+	do_write(2,12);
+	wait (psel_i == 0);
+	#2
+	do_read(2);
+end
+
+
+
 
 
 endmodule // apb_slave_module_tester

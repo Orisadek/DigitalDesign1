@@ -48,7 +48,7 @@ matmul_matrix_module #(.DATA_WIDTH(DATA_WIDTH),.BUS_WIDTH(BUS_WIDTH)) U_matmul(
    .c_matrix_o (cMatrixWire), // // matrix c as long vector - output
    .flags_o    (flags_o), // flags for overflow
    .finish_mul_o (finishMulWire) // write to start to de assert
-);
+); 
 always @(negedge rst_ni or posedge clk_i)
 	begin : enable_w_finish
 		if(~rst_ni)

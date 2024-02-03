@@ -28,15 +28,15 @@ wire [2:0] n_dim_i,k_dim_i,m_dim_i; // matrix A is NxK , matrix B KxM
 wire signed [(MAX_DIM*MAX_DIM*DATA_WIDTH)-1:0] a_matrix_i; // this matrix is actually  long register
 wire signed [(MAX_DIM*MAX_DIM*DATA_WIDTH)-1:0] b_matrix_i; // this matrix is actually  long register
 wire  signed [(MAX_DIM*MAX_DIM*2*(DATA_WIDTH))-1:0] c_matrix_o; // output matrix is actually long matrix
-wire [(MAX_DIM*MAX_DIM) -1:0]  flags_o; 					// flags for overflow in pe
+wire [(MAX_DIM*MAX_DIM) -1:0] flags_o; 					// flags for overflow in pe
 reg finish_mul_o; // write out when finished
-wire signed [DATA_WIDTH-1:0]   matA [MAX_DIM:0][MAX_DIM:0]; // wires for pe's rows
-wire signed [DATA_WIDTH-1:0]   matB [MAX_DIM:0][MAX_DIM:0]; // wires for pe's cols
-wire signed [2*DATA_WIDTH-1:0] matC [MAX_DIM-1:0][MAX_DIM-1:0]; // wires for pe's results
-reg  signed [DATA_WIDTH-1:0]   regMatA[MAX_DIM-1:0]; // wires for pe's rows
-reg  signed [DATA_WIDTH-1:0]   regMatB[MAX_DIM-1:0]; // wires for pe's rows
-reg  signed [2*MAX_DIM :0] counter,index_a,index_b; // counter for clock and index for each matrix
-
+wire signed [DATA_WIDTH-1:0] matA [MAX_DIM:0][MAX_DIM:0]; // wires for pe's rows
+wire signed [DATA_WIDTH-1:0] matB [MAX_DIM:0][MAX_DIM:0]; // wires for pe's cols
+wire signed [2*DATA_WIDTH:0] matC [MAX_DIM-1:0][MAX_DIM-1:0]; // wires for pe's results
+reg  signed [DATA_WIDTH-1:0] regMatA[MAX_DIM-1:0]; // wires for pe's rows
+reg  signed [DATA_WIDTH-1:0] regMatB[MAX_DIM-1:0]; // wires for pe's rows
+reg  signed [2*MAX_DIM+1 :0] index_a,index_b; // counter for clock and index for each matrix
+reg  signed [2*MAX_DIM+1 :0] counter;
 
 genvar  i,j; // generated variables
 generate
@@ -64,7 +64,7 @@ endgenerate
 generate
   for (j = 0; j < MAX_DIM; j = j +1) begin : rows_assign // connect rows output and matC
 	   for (i = 0; i < MAX_DIM; i = i +1) begin : cols_assign // connect cols output and matC
-		     assign c_matrix_o[(j*DATA_WIDTH*MAX_DIM*2+i*(DATA_WIDTH*2))+: 2*DATA_WIDTH] = matC[i][j]; // conect the wires
+		     assign c_matrix_o[(j*(DATA_WIDTH)*MAX_DIM*2+i*((DATA_WIDTH)*2))+: 2*DATA_WIDTH] = matC[i][j][2*DATA_WIDTH-1:0]; // conect the wires
 	   end // end for i
   end // end for j
  endgenerate  
@@ -92,7 +92,7 @@ always @(posedge clk_i or negedge rst_ni)
 		end
   else if(start_i) // if start bit
 		begin
-			counter <= counter+1; //  count up with clk
+			counter <= counter[2*MAX_DIM:0]+1; //  count up with clk
 		end
   else // if posedge clk and start != 1 -> initialize counter
 		begin
@@ -106,16 +106,16 @@ always @(posedge clk_i or negedge rst_ni)
   begin: insert_vector_a
     if(~rst_ni)  // on negative edge
      begin
-        for (index_a = 0; index_a < MAX_DIM; index_a = index_a+1) // loop with index_a
+        for (index_a = 0; index_a < MAX_DIM; index_a = index_a[2*MAX_DIM:0]+1) // loop with index_a
           begin : reset_a
 			       regMatA[index_a] <= {DATA_WIDTH{1'b0}}; // init to 0
 		      end
 	   end
    else if(start_i && counter <(k_dim_i+m_dim_i+n_dim_i-2))  // make sure not to happen if we finished
 		begin
-			for (index_a = 0; index_a < MAX_DIM; index_a = index_a+1) // loop with index_a 
+			for (index_a = 0; index_a < MAX_DIM; index_a = index_a[2*MAX_DIM:0]+1) // loop with index_a 
 				begin : Left  // start insert to reg the values
-				    regMatA[index_a] <= (counter-index_a>=0 && counter-index_a<{{2*MAX_DIM-1{1'b0}},k_dim_i} && index_a < {{2*MAX_DIM-1{1'b0}},n_dim_i}) ?  // if the condition is true insert value 
+				    regMatA[index_a] <= (counter-index_a>=0 && counter-index_a<{{(2*MAX_DIM){1'b0}},k_dim_i} && index_a < {{(2*MAX_DIM-1){1'b0}},n_dim_i}) ?  // if the condition is true insert value 
 					a_matrix_i[(index_a*MATRIX_WORD)+((counter-index_a)*DATA_WIDTH)+:DATA_WIDTH] : {DATA_WIDTH{1'b0}};                                      // else insert zero (MUX)
 				end
 		end
@@ -127,16 +127,16 @@ always @(posedge clk_i or negedge rst_ni)
  begin: insert_vector_b
    if(~rst_ni)  // on negative edge
      begin
-        for (index_b = 0; index_b < MAX_DIM; index_b = index_b+1) // loop with index_b
+        for (index_b = 0; index_b < MAX_DIM; index_b = index_b[2*MAX_DIM:0]+1) // loop with index_b
           begin : reset_b
 			       regMatB[index_b] <= {DATA_WIDTH{1'b0}};  // init to 0
 		      end // end for
 	    end // end if
     else if(start_i && counter<(k_dim_i+m_dim_i+n_dim_i-2)) // make sure not to happen if we finished
 		begin
-			for (index_b = 0; index_b < MAX_DIM; index_b = index_b+1) // loop with index_a 
+			for (index_b = 0; index_b < MAX_DIM; index_b= index_b[2*MAX_DIM:0] +1) // loop with index_a 
 				begin : Top  // start insert to reg the values
-					regMatB[index_b] <= (counter-index_b>=0 && counter-index_b<{{2*MAX_DIM-1{1'b0}},m_dim_i} && index_b < {{2*MAX_DIM-1{1'b0}},k_dim_i}) ? // if the condition is true insert value 
+					regMatB[index_b] <= (counter-index_b>=0 && counter-index_b<{{(2*MAX_DIM){1'b0}},m_dim_i} && index_b < {{(2*MAX_DIM-1){1'b0}},k_dim_i}) ? // if the condition is true insert value 
 					b_matrix_i[(index_b*MATRIX_WORD)+((counter-index_b)*DATA_WIDTH)+:DATA_WIDTH]: {DATA_WIDTH{1'b0}};									   // else insert zero (MUX)
 				end // end for
 		end	 // end else if
