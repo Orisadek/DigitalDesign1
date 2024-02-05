@@ -20,20 +20,20 @@ output read_data_o; // the data we read (line/col)
 parameter DATA_WIDTH = 32; // data width
 parameter BUS_WIDTH = 64; // bus width
 parameter ADDR_WIDTH = 32; // addr width
-parameter MAX_DIM = (BUS_WIDTH / DATA_WIDTH); // max dim matrix
+localparam MAX_DIM = (BUS_WIDTH / DATA_WIDTH); // max dim matrix
 wire [ADDR_WIDTH-1:0] address_i; // adress of writing (for line/col)
-wire [DATA_WIDTH-1:0] write_data_i; //the data we ant to write
-wire [DATA_WIDTH-1:0] read_data_o; // the data we read (line/col)
+wire [BUS_WIDTH-1:0] write_data_i; //the data we ant to write
+wire [BUS_WIDTH-1:0] read_data_o; // the data we read (line/col)
 
     // Declare the registers
-reg [DATA_WIDTH-1:0] registers [MAX_DIM*MAX_DIM-1:0]; // where we keep the operands
-reg [MAX_DIM*MAX_DIM:0] index;  // Read and Write Logic
+reg [BUS_WIDTH-1:0] registers [MAX_DIM-1:0]; // where we keep the operands
+reg [MAX_DIM:0] index;  // Read and Write Logic
 
 always @(posedge clk_i or negedge rst_ni)
  begin :memory_operands
     if (~rst_ni) // on negative edge
 	begin
-		for (index = 0; index < MAX_DIM*MAX_DIM; index = index[MAX_DIM*MAX_DIM-1:0]  + 1) 
+		for (index = 0; index < MAX_DIM; index = index[MAX_DIM-1:0] + 1) 
 			begin
 				registers[index] <= 0; // init to zero
 			end
@@ -45,6 +45,6 @@ always @(posedge clk_i or negedge rst_ni)
 end
 
     // Output assignment for read data
-assign read_data_o = registers[address_i]; // read the data async
+assign read_data_o = (write_enable_i == 0) ? registers[address_i] : 0; // read the data async
 
 endmodule

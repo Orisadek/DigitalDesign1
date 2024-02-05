@@ -24,7 +24,7 @@ wire [DATA_WIDTH-1:0]b_i;
 wire start_i;
 wire [DATA_WIDTH-1:0]a_o;
 wire [DATA_WIDTH-1:0]b_o;
-wire [2*DATA_WIDTH:0]res_o;
+wire [2*DATA_WIDTH-1:0]res_o;
 wire overflow_o;
  
 

@@ -16,17 +16,18 @@ output data_o;
 parameter DATA_WIDTH = 32; // parameter for data
 parameter BUS_WIDTH  = 64; // bus width
 parameter ADDR_WIDTH = 32; // address width
-parameter MAX_DIM    = BUS_WIDTH/DATA_WIDTH; // max dim of the matrix
 parameter SPN        = 4;
-parameter BYTE       = 8;
+localparam BYTE      = 8;
+localparam MAX_DIM   = BUS_WIDTH/DATA_WIDTH; // max dim of the matrix
+
 wire clk_i;
 wire pwrite_i;
 wire [ADDR_WIDTH-1:0] addr_i;
-wire [BYTE-1:0] data_i;
-wire [BYTE-1:0] data_o;
-reg  [BYTE-1:0] mem [0:(2**ADDR_WIDTH)-1];
+wire [DATA_WIDTH-1:0] data_i;
+wire [DATA_WIDTH-1:0] data_o;
+reg  [DATA_WIDTH-1:0] mem [ADDR_WIDTH*ADDR_WIDTH-1:0];
 
-assign data_o = mem[addr_i];
+assign data_o = pwrite_i?0:mem[addr_i];
 
 always @(posedge clk_i)
 	begin:write_to_mem

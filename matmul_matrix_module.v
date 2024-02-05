@@ -32,7 +32,7 @@ wire [(MAX_DIM*MAX_DIM) -1:0] flags_o; 					// flags for overflow in pe
 reg finish_mul_o; // write out when finished
 wire signed [DATA_WIDTH-1:0] matA [MAX_DIM:0][MAX_DIM:0]; // wires for pe's rows
 wire signed [DATA_WIDTH-1:0] matB [MAX_DIM:0][MAX_DIM:0]; // wires for pe's cols
-wire signed [2*DATA_WIDTH:0] matC [MAX_DIM-1:0][MAX_DIM-1:0]; // wires for pe's results
+wire signed [2*DATA_WIDTH-1:0] matC [MAX_DIM-1:0][MAX_DIM-1:0]; // wires for pe's results
 reg  signed [DATA_WIDTH-1:0] regMatA[MAX_DIM-1:0]; // wires for pe's rows
 reg  signed [DATA_WIDTH-1:0] regMatB[MAX_DIM-1:0]; // wires for pe's rows
 reg  signed [2*MAX_DIM+1 :0] index_a,index_b; // counter for clock and index for each matrix
@@ -64,7 +64,7 @@ endgenerate
 generate
   for (j = 0; j < MAX_DIM; j = j +1) begin : rows_assign // connect rows output and matC
 	   for (i = 0; i < MAX_DIM; i = i +1) begin : cols_assign // connect cols output and matC
-		     assign c_matrix_o[(j*(DATA_WIDTH)*MAX_DIM*2+i*((DATA_WIDTH)*2))+: 2*DATA_WIDTH] = matC[i][j][2*DATA_WIDTH-1:0]; // conect the wires
+		     assign c_matrix_o[(j*(DATA_WIDTH)*MAX_DIM*2+i*((DATA_WIDTH)*2))+: 2*DATA_WIDTH] = matC[i][j]; // conect the wires
 	   end // end for i
   end // end for j
  endgenerate  

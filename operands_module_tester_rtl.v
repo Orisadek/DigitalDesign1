@@ -22,7 +22,7 @@ module operands_module_tester (clk_i,
 parameter DATA_WIDTH = 32;
 parameter BUS_WIDTH = 64;
 parameter ADDR_WIDTH = 32;
-parameter MAX_DIM = (BUS_WIDTH / DATA_WIDTH);
+localparam MAX_DIM = (BUS_WIDTH / DATA_WIDTH);
 
 
 output clk_i;
@@ -32,13 +32,65 @@ output address_i;
 output write_data_i;
 input  read_data_o;
 
-wire clk_i;
-wire rst_ni;
-wire write_enable_i;
-wire address_i;
-wire write_data_i;
-wire read_data_o;
+reg  clk_i;
+reg  rst_ni;
+reg  write_enable_i;
+reg  [ADDR_WIDTH-1:0] address_i; // adress of writing (for line/col)
+reg  [BUS_WIDTH-1:0] write_data_i; //the data we ant to write
+wire [BUS_WIDTH-1:0] read_data_o; // the data we read (line/col)
+reg [DATA_WIDTH-1:0] val_a1,val_a2,val_a3,val_a4;
 
+initial begin: setup_clk
+  clk_i = 1'b0;
+  forever #1 clk_i = ~clk_i;
+end
+
+initial begin: setup_rst
+  rst_ni = 1'b0;
+  #10 rst_ni = 1'b1;
+end
+
+task do_write;
+  input [ADDR_WIDTH-1:0] addr_write;
+  input [BUS_WIDTH-1:0] data_write;
+    begin
+      address_i = addr_write;
+      write_data_i = data_write;
+      write_enable_i = 1'b1;
+      #2;
+      write_enable_i = 1'b0;
+    end
+endtask
+    
+initial begin: setup_matrices
+	val_a1=2;
+	val_a2=3;
+	val_a3=4;
+	val_a4=5;
+end
+
+task do_read;
+    input [ADDR_WIDTH-1:0] addr_write;
+    begin
+	  write_enable_i = 1'b0;
+      address_i = addr_write; 
+	  #1;
+    end
+endtask    
+    
+    
+initial begin
+	wait (rst_ni == 1'b1);
+    do_write(1,{val_a1,val_a2});
+    #1;
+	do_write(0,{val_a3,val_a4});
+	#2;
+    do_read(1);
+	#2;
+	do_read(0);
+end   
+    
+		
 
 endmodule // operands_module_tester
 

@@ -16,18 +16,17 @@ module operands_module_tb;
 parameter DATA_WIDTH = 32;
 parameter BUS_WIDTH = 64;
 parameter ADDR_WIDTH = 32;
-parameter MAX_DIM = (BUS_WIDTH / DATA_WIDTH);
+localparam MAX_DIM = (BUS_WIDTH / DATA_WIDTH);
 
 // Internal signal declarations
 wire clk_i;
 wire rst_ni;
 wire write_enable_i;
-wire address_i;
-wire write_data_i;
-wire read_data_o;
+wire [ADDR_WIDTH-1:0] address_i; // adress of writing (for line/col)
+wire [BUS_WIDTH-1:0] write_data_i; //the data we ant to write
+wire [BUS_WIDTH-1:0] read_data_o; // the data we read (line/col)
 
-
-operands_module #(32,64,32,(BUS_WIDTH / DATA_WIDTH)) U_0(
+operands_module #(32,64,32) U_0(
    .clk_i          (clk_i),
    .rst_ni         (rst_ni),
    .write_enable_i (write_enable_i),
@@ -36,7 +35,7 @@ operands_module #(32,64,32,(BUS_WIDTH / DATA_WIDTH)) U_0(
    .read_data_o    (read_data_o)
 );
 
-operands_module_tester #(32,64,32,(BUS_WIDTH / DATA_WIDTH)) U_1(
+operands_module_tester #(32,64,32) U_1(
    .clk_i          (clk_i),
    .rst_ni         (rst_ni),
    .write_enable_i (write_enable_i),
