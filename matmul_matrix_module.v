@@ -36,7 +36,7 @@ wire signed [2*DATA_WIDTH-1:0] matC [MAX_DIM-1:0][MAX_DIM-1:0]; // wires for pe'
 reg  signed [DATA_WIDTH-1:0] regMatA[MAX_DIM-1:0]; // wires for pe's rows
 reg  signed [DATA_WIDTH-1:0] regMatB[MAX_DIM-1:0]; // wires for pe's rows
 reg  signed [2*MAX_DIM+1 :0] index_a,index_b; // counter for clock and index for each matrix
-reg  signed [2*MAX_DIM+1 :0] counter;
+reg  signed [2*MAX_DIM :0] counter;
 
 genvar  i,j; // generated variables
 generate
@@ -92,7 +92,7 @@ always @(posedge clk_i or negedge rst_ni)
 		end
   else if(start_i) // if start bit
 		begin
-			counter <= counter[2*MAX_DIM:0]+1; //  count up with clk
+			counter <= counter[2*MAX_DIM-1:0]+1; //  count up with clk
 		end
   else // if posedge clk and start != 1 -> initialize counter
 		begin
@@ -149,7 +149,7 @@ always @(posedge clk_i or negedge rst_ni)
 		begin
 			finish_mul_o <= 0; // init to 0
 		end
-    else if(start_i&&counter>=(k_dim_i+m_dim_i+n_dim_i-2)) // make sure not to happen if we finished
+    else if(start_i&& (counter>=(k_dim_i+m_dim_i+n_dim_i-2))) // make sure not to happen if we finished
 		begin
 			finish_mul_o <= 1; // sign that we finish the operation
 		end	 // end  if

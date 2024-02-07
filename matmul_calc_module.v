@@ -59,7 +59,7 @@ always @(negedge rst_ni or posedge clk_i)
 			end 
 		else if(finishMulWire)
 			begin
-				c_matrix_o   <= mode_i ? cMatrixWire + c_bias_i : cMatrixWire; // check if return with bias c or without
+				c_matrix_o   <= cMatrixWire + mode_i ?  c_bias_i : 0; // check if return with bias c or without
 				enable_w_o   <= 1; // enable write to sp
 				finish_mul_o <= 1; // signal to change start bit to 0
 			end

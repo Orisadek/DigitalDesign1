@@ -117,12 +117,17 @@ always @(psel_i,penable_i,current_state)	// combinatorical always
 
 
 genvar b;
-generate for(b=0;b<MAX_DIM;b=b+1) begin:insert_byte
-always @(psel_i,penable_i,current_state) begin
-  if(current_state == ACCESS_WRITE && pstrb_i[b] && penable_i)
-      RAM[paddr_i][(b+1)*DATA_WIDTH-1:b*DATA_WIDTH] <= pwdata_i[(b+1)*DATA_WIDTH-1:b*DATA_WIDTH];
-    end
-end endgenerate
+generate for(b=0;b<MAX_DIM;b=b+1) 
+    begin:insert_byte
+        always @(psel_i,penable_i,current_state)
+          begin:strobe_apb
+            if(current_state == ACCESS_WRITE && pstrb_i[b] && penable_i)
+              begin
+                RAM[paddr_i][(b+1)*DATA_WIDTH-1:b*DATA_WIDTH] <= pwdata_i[(b+1)*DATA_WIDTH-1:b*DATA_WIDTH];
+              end
+          end
+    end 
+endgenerate
 
 	
 	

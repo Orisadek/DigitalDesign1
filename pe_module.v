@@ -18,36 +18,29 @@ wire clk_i, rst_ni,start_i; // define clk and rst
 wire signed [DATA_WIDTH-1:0] a_i ,b_i; // value inputs
 reg  signed [DATA_WIDTH-1:0] a_o ,b_o; // value to move on to the next pe
 reg  signed [2*DATA_WIDTH-1:0] res_o; // result of matrix index
-wire  signed [2*DATA_WIDTH-1:0] matmulRes; // result of matrix 
 reg overflow_o; // overflow bit out
-reg overflowBit; // overflow bit
-
-assign matmulRes = a_i * b_i;
 
 always @(posedge clk_i or negedge rst_ni) // wake in rising edge of clock or falling edge of reset
-begin : multiply_and_acc //TODO: add the option to clear the result for next usage
+begin : multiply_and_acc // start and init if needed
   if(~rst_ni) // in negative edge 
     begin
-      a_o         <=  0; // initialize A out
-      b_o         <=  0; // initialize B out
-      res_o       <=  0; // initialize result
-	  overflow_o  <=  0;
+      a_o           <=  0; // initialize A out
+      b_o           <=  0; // initialize B out
+      res_o         <=  0; // initialize result
+	    overflow_o    <=  0; // init overflow
     end
-  else if(!start_i) 
+  else if(!start_i) // if start_i == 0
     begin 
-      a_o         <=  0; // initialize A out
-      b_o         <=  0; // initialize B out
-      res_o       <=  0; // initialize result 
-	  overflow_o  <=  0;
+      a_o           <=  0; // initialize A out
+      b_o           <=  0; // initialize B out
+      res_o         <=  0; // initialize result 
+	    overflow_o    <=  0; // init overflow
     end
   else
     begin  
-      {overflow_bit,res_o}  <= res_o + matmulRes; // multiple the argument and add to result and overflow bit
-      a_o         			<= a_i; // move A to next pe
-      b_o         			<= b_i; // move B to next pe
+      {overflow_o,res_o}  <= res_o + a_i * b_i; // multiple the argument and add to result and overflow bit
+      a_o         	     		<= a_i; // move A to next pe
+      b_o         			     <= b_i; // move B to next pe
     end
 end
-
-
-
 endmodule
