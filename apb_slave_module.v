@@ -26,7 +26,7 @@ parameter [1:0] IDLE          = 2'b00,
 
 wire clk_i, rst_ni; // define clk and rst
 wire psel_i,penable_i,pwrite_i; // psel - choose the module (we only have one - matmul) , penable - enable to the APB ,pwrite - write mode or read mode
-wire [BUS_WIDTH/8-1:0] pstrb_i; //for every byte there is a Pstrb[n]
+wire [MAX_DIM-1:0] pstrb_i; //for every byte there is a Pstrb[n]
 wire [BUS_WIDTH-1:0] pwdata_i; // data in
 wire [ADDR_WIDTH-1:0] paddr_i; // address in
 reg  pready_o,pready_next;    // ready out and next
@@ -97,7 +97,6 @@ always @(psel_i,penable_i,current_state)	// combinatorical always
 									if(penable_i) //enable write
 										begin
 											pready_next      = 1; // allow next op
-											RAM[paddr_i]     = pwdata_i;  //the stobe choose what bytes to write to RAM, need to ask ori
 											next_state       = IDLE; // go to idle
 											next_busy        = 0;  // isnt busy
 											pslverr_next     = 1'b0;  // without an err
@@ -116,24 +115,35 @@ always @(psel_i,penable_i,current_state)	// combinatorical always
        endcase
     end	
 
+
+genvar b;
+generate for(b=0;b<MAX_DIM;b=b+1) begin:insert_byte
+always @(psel_i,penable_i,current_state) begin
+  if(current_state == ACCESS_WRITE && pstrb_i[b] && penable_i)
+      RAM[paddr_i][(b+1)*DATA_WIDTH-1:b*DATA_WIDTH] <= pwdata_i[(b+1)*DATA_WIDTH-1:b*DATA_WIDTH];
+    end
+end endgenerate
+
+	
+	
 	
 always @(posedge clk_i or negedge rst_ni) // Asyncronise reset and clk
 begin: apb_clk
-		if(~rst_ni) //reset, go back to idle and reset all outputs.
+		if(!rst_ni) //reset, go back to idle and reset all outputs.
     		begin
     			current_state    <= IDLE; // state idle
-    			pready_o 	     <= 1;   // ready 1
-    			pslverr_o	     <= 0;   // err 0
-    			prdata_o 	     <= 0;   // out data 0
+    			pready_o 	       <= 1;   // ready 1
+    			pslverr_o	       <= 0;   // err 0
+    			prdata_o 	       <= 0;   // out data 0
     			busy_o           <= 0;	// busy 0
     		end
 	    else 
 			begin
 				current_state    <= next_state; // move to next state
-    			pready_o 	     <= pready_next; // move to next ready
-    			pslverr_o	     <= pslverr_next; // move to next pslverr
-    			prdata_o 	     <= prdata_next; // move to next out data
-    			busy_o           <= next_busy; // move to next busy
+    			pready_o 	        <= pready_next; // move to next ready
+    			pslverr_o	        <= pslverr_next; // move to next pslverr
+    			prdata_o 	        <= prdata_next; // move to next out data
+    			busy_o            <= next_busy; // move to next busy
 			end
 end
 endmodule

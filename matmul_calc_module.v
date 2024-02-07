@@ -53,15 +53,15 @@ always @(negedge rst_ni or posedge clk_i)
 	begin : enable_w_finish
 		if(~rst_ni)
 			begin
-				c_matrix_o <= 0; // check if return with bias c or without
-				enable_w_o <= 0; // disable write to sp
+				c_matrix_o   <= 0; // check if return with bias c or without
+				enable_w_o   <= 0; // disable write to sp
 				finish_mul_o <= 0; // do keep the value of start as is
 			end 
 		else if(finishMulWire)
 			begin
-				c_matrix_o <= mode_i ? cMatrixWire + c_bias_i : cMatrixWire; // check if return with bias c or without
-				enable_w_o <= 1; // enable write to sp
-				finish_mul_o    <= 1; // signal to change start bit to 0
+				c_matrix_o   <= mode_i ? cMatrixWire + c_bias_i : cMatrixWire; // check if return with bias c or without
+				enable_w_o   <= 1; // enable write to sp
+				finish_mul_o <= 1; // signal to change start bit to 0
 			end
 		else
 			begin
