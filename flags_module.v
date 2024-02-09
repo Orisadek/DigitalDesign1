@@ -24,20 +24,19 @@ wire [MAX_DIM^2-1:0] write_data_i; //the data we ant to write
 wire [MAX_DIM^2-1:0] read_data_o; // the data we read (line/col)
 
     // Declare the register
-reg [MAX_DIM*MAX_DIM-1:0] register; // a register MAX_DIM^2 LENGTH, each bit is corspond to the matmul square that indicats where there is an over\under flow
+reg [MAX_DIM*MAX_DIM-1:0] Mem; // a register MAX_DIM^2 LENGTH, each bit is corspond to the matmul square that indicats where there is an over\under flow
 
-always @(posedge clk_i or negedge rst_ni)
- begin :memory_operands
-    if (~rst_ni) // on negative edge
+always @(posedge clk_i or negedge rst_ni) begin: insert
+    if (!rst_ni) // on negative edge
 	     begin
-				  register <= 0; // init to zero
+				  Mem <= 0; // init to zero
        end
 	  else if(write_enable_i) // if writing enable pass all bits of Flags in matmul
 		begin
-			    register <= write_data_i;
+			    Mem <= write_data_i;
 		end
  end
 
          // Output assignment for read data
-assign read_data_o = register; // read the data async
+assign read_data_o = Mem; // read the data async
 endmodule
